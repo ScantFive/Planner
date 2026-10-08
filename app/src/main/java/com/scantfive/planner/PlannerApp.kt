@@ -7,6 +7,7 @@ import com.scantfive.planner.data.Task
 import com.scantfive.planner.data.TaskRepository
 import com.scantfive.planner.reminder.NotificationHelper
 import com.scantfive.planner.reminder.ReminderScheduler
+import com.scantfive.planner.widget.WidgetUpdater
 
 /** Черновик задачи для передачи из быстрого добавления в форму («Подробнее»). */
 class DraftHolder {
@@ -23,7 +24,9 @@ class DraftHolder {
 /** Ручной DI-контейнер: для MVP этого достаточно. */
 class AppContainer(context: Context) {
     private val database = PlannerDatabase.create(context)
-    val repository = TaskRepository(database.taskDao(), ReminderScheduler(context))
+    val repository = TaskRepository(database.taskDao(), ReminderScheduler(context)) {
+        WidgetUpdater.requestUpdate(context)
+    }
     val draft = DraftHolder()
 }
 

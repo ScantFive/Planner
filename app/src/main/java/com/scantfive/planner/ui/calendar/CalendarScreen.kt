@@ -58,9 +58,6 @@ import java.time.format.TextStyle
 import java.time.temporal.WeekFields
 import java.util.Locale
 
-/** Сколько «дорожек» протяжённых событий показывать в неделе; остальные видны в списке дня. */
-private const val MAX_LANES = 3
-private const val MAX_DOTS = 3
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -143,14 +140,12 @@ fun CalendarScreen(
 
 @Composable
 private fun MonthHeader(month: YearMonth, onPrevious: () -> Unit, onNext: () -> Unit, onToday: () -> Unit) {
-    val name = month.month.getDisplayName(TextStyle.FULL_STANDALONE, Locale.getDefault())
-        .replaceFirstChar { it.uppercase() }
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onPrevious) {
             Icon(Icons.Default.KeyboardArrowLeft, stringResource(R.string.prev_month))
         }
         Text(
-            "$name ${month.year}",
+            monthTitle(month),
             style = MaterialTheme.typography.titleLarge,
             textAlign = TextAlign.Center,
             modifier = Modifier.weight(1f),
