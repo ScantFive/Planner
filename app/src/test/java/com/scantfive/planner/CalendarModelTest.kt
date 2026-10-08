@@ -4,6 +4,7 @@ import com.scantfive.planner.data.Task
 import com.scantfive.planner.ui.calendar.CalendarEvent
 import com.scantfive.planner.ui.calendar.defaultDueMillis
 import com.scantfive.planner.ui.calendar.dotsFor
+import com.scantfive.planner.ui.calendar.monthTitle
 import com.scantfive.planner.ui.calendar.monthWeeks
 import com.scantfive.planner.ui.calendar.toCalendarEvent
 import com.scantfive.planner.ui.calendar.weekSegments
@@ -18,6 +19,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.YearMonth
 import java.time.ZoneOffset
+import java.util.Locale
 
 class CalendarModelTest {
     private fun event(id: Long, start: LocalDate, end: LocalDate = start) =
@@ -108,5 +110,10 @@ class CalendarModelTest {
         assertEquals(at(d(20), LocalTime.of(9, 0)), defaultDueMillis(d(20), now, ZoneOffset.UTC))
         val late = LocalDateTime.of(2026, 10, 8, 23, 30)
         assertEquals(at(d(8), LocalTime.of(23, 59)), defaultDueMillis(d(8), late, ZoneOffset.UTC))
+    }
+
+    @Test
+    fun monthTitleIsCapitalizedStandaloneName() {
+        assertEquals("Октябрь 2026", monthTitle(YearMonth.of(2026, 10), Locale.forLanguageTag("ru")))
     }
 }

@@ -8,7 +8,9 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.YearMonth
 import java.time.ZoneId
+import java.time.format.TextStyle
 import java.time.temporal.ChronoUnit
+import java.util.Locale
 
 /** Событие календаря: задача со сроком, занимающая дни от [start] до [end] включительно. */
 data class CalendarEvent(
@@ -27,6 +29,17 @@ data class CalendarEvent(
 
 fun epochDayOf(millis: Long, zone: ZoneId = ZoneId.systemDefault()): Long =
     Instant.ofEpochMilli(millis).atZone(zone).toLocalDate().toEpochDay()
+
+/** Сколько «дорожек» протяжённых событий рисовать в неделе; остальные видны в списке дня. */
+const val MAX_LANES = 3
+
+/** Сколько точек однодневных событий помещается в клетку дня. */
+const val MAX_DOTS = 5
+
+/** «Октябрь 2026». */
+fun monthTitle(month: YearMonth, locale: Locale = Locale.getDefault()): String =
+    month.month.getDisplayName(TextStyle.FULL_STANDALONE, locale).replaceFirstChar { it.titlecase(locale) } +
+        " " + month.year
 
 /** Задача без срока в календаре не показывается. */
 fun Task.toCalendarEvent(zone: ZoneId = ZoneId.systemDefault()): CalendarEvent? {

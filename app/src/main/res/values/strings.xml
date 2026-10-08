@@ -19,6 +19,7 @@
     <string name="task_added">Задача добавлена</string>
     <string name="voice_input">Голосовой ввод</string>
     <string name="speech_prompt">Скажите, что запланировать</string>
+    <string name="widget_description">Календарь месяца и голосовое добавление задач</string>
     <string name="title_tasks">Задачи</string>
     <string name="title_new_task">Новая задача</string>
     <string name="title_edit_task">Редактирование</string>
