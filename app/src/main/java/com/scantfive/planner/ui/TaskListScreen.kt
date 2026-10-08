@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scantfive.planner.R
+import com.scantfive.planner.quickadd.QuickAddAction
 import com.scantfive.planner.data.Task
 import com.scantfive.planner.ui.calendar.epochDayOf
 
@@ -49,12 +50,18 @@ fun TaskListScreen(
     viewModel: TaskListViewModel,
     onAddTask: () -> Unit,
     onOpenTask: (Long) -> Unit,
+    onQuickAdd: () -> Unit,
 ) {
     val tasks by viewModel.tasks.collectAsStateWithLifecycle()
     val filter by viewModel.filter.collectAsStateWithLifecycle()
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.title_tasks)) }) },
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.title_tasks)) },
+                actions = { QuickAddAction(onQuickAdd) },
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = onAddTask) {
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_task))

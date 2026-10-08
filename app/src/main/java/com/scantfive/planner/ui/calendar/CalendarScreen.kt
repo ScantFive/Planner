@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scantfive.planner.R
+import com.scantfive.planner.quickadd.QuickAddAction
 import com.scantfive.planner.ui.formatDateTime
 import com.scantfive.planner.ui.formatDay
 import java.time.LocalDate
@@ -67,6 +68,7 @@ fun CalendarScreen(
     viewModel: CalendarViewModel,
     onAddTask: (LocalDate) -> Unit,
     onOpenTask: (Long) -> Unit,
+    onQuickAdd: () -> Unit,
 ) {
     val month by viewModel.month.collectAsStateWithLifecycle()
     val selected by viewModel.selected.collectAsStateWithLifecycle()
@@ -78,7 +80,12 @@ fun CalendarScreen(
     val today = LocalDate.now()
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.tab_calendar)) }) },
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.tab_calendar)) },
+                actions = { QuickAddAction(onQuickAdd) },
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = { onAddTask(selected) }) {
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_task))

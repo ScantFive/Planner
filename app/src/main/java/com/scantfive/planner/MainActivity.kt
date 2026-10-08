@@ -1,8 +1,10 @@
 package com.scantfive.planner
 
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -25,6 +27,14 @@ import com.scantfive.planner.ui.calendar.CalendarScreen
 import com.scantfive.planner.ui.calendar.CalendarViewModel
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import com.scantfive.planner.quickadd.QuickAddDialog
+import com.scantfive.planner.quickadd.toTask
+import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -42,15 +52,29 @@ import com.scantfive.planner.ui.TaskListScreen
 import com.scantfive.planner.ui.TaskListViewModel
 import com.scantfive.planner.ui.theme.PlannerTheme
 
+/** Открыть приложение сразу в быстром добавлении голосом (кнопка микрофона в виджете). */
+const val ACTION_QUICK_ADD = "com.scantfive.planner.action.QUICK_ADD"
+
 class MainActivity : ComponentActivity() {
+    /** Счётчик запросов быстрого добавления извне; каждое увеличение открывает окно. */
+    private val quickAddRequests = mutableIntStateOf(0)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // После поворота экрана тот же intent не должен открывать окно повторно.
+        if (savedInstanceState == null && intent?.action == ACTION_QUICK_ADD) quickAddRequests.intValue++
         setContent {
             PlannerTheme {
                 RequestNotificationPermission()
-                PlannerNavHost()
+                PlannerNavHost(quickAddRequests.intValue)
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.action == ACTION_QUICK_ADD) quickAddRequests.intValue++
     }
 }
 
@@ -77,10 +101,38 @@ private object Routes {
 
 private data class Tab(val route: String, val labelRes: Int, val icon: ImageVector)
 
+private const val QUICK_ADD_CLOSED = 0
+private const val QUICK_ADD_VOICE = 2
+
 @Composable
-private fun PlannerNavHost() {
-    val repository = (LocalContext.current.applicationContext as PlannerApp).container.repository
+private fun PlannerNavHost(quickAddRequests: Int) {
+    val context = LocalContext.current
+    val container = (context.applicationContext as PlannerApp).container
+    val repository = container.repository
     val navController = rememberNavController()
+    val scope = rememberCoroutineScope()
+    var quickAdd by rememberSaveable { mutableIntStateOf(QUICK_ADD_CLOSED) }
+
+    LaunchedEffect(quickAddRequests) {
+        if (quickAddRequests > 0) quickAdd = QUICK_ADD_VOICE
+    }
+
+    if (quickAdd != QUICK_ADD_CLOSED) {
+        QuickAddDialog(
+            startWithVoice = quickAdd == QUICK_ADD_VOICE,
+            onDismiss = { quickAdd = QUICK_ADD_CLOSED },
+            onSave = { parsed ->
+                quickAdd = QUICK_ADD_CLOSED
+                scope.launch { repository.save(parsed.toTask()) }
+                Toast.makeText(context, R.string.task_added, Toast.LENGTH_SHORT).show()
+            },
+            onDetails = { parsed ->
+                quickAdd = QUICK_ADD_CLOSED
+                container.draft.put(parsed.toTask())
+                navController.navigate(Routes.edit(TaskEditViewModel.NEW_TASK))
+            },
+        )
+    }
     val tabs = listOf(
         Tab(Routes.CALENDAR, R.string.tab_calendar, Icons.Default.DateRange),
         Tab(Routes.TASKS, R.string.title_tasks, Icons.AutoMirrored.Filled.List),
@@ -126,6 +178,7 @@ private fun PlannerNavHost() {
                         navController.navigate(Routes.edit(TaskEditViewModel.NEW_TASK, day.toEpochDay()))
                     },
                     onOpenTask = { id -> navController.navigate(Routes.edit(id)) },
+                    onQuickAdd = { quickAdd = QUICK_ADD_VOICE },
                 )
             }
             composable(Routes.TASKS) {
@@ -136,6 +189,7 @@ private fun PlannerNavHost() {
                     viewModel = vm,
                     onAddTask = { navController.navigate(Routes.edit(TaskEditViewModel.NEW_TASK)) },
                     onOpenTask = { id -> navController.navigate(Routes.edit(id)) },
+                    onQuickAdd = { quickAdd = QUICK_ADD_VOICE },
                 )
             }
             composable(
@@ -151,7 +205,12 @@ private fun PlannerNavHost() {
                 val id = entry.arguments?.getLong("id") ?: TaskEditViewModel.NEW_TASK
                 val day = entry.arguments?.getLong("day")?.takeIf { it != Routes.NO_DAY }
                 val vm: TaskEditViewModel = viewModel(
-                    factory = viewModelFactory { initializer { TaskEditViewModel(repository, id, day) } },
+                    factory = viewModelFactory {
+                        initializer {
+                            val draft = if (id == TaskEditViewModel.NEW_TASK) container.draft.take() else null
+                            TaskEditViewModel(repository, id, day, draft)
+                        }
+                    },
                 )
                 TaskEditScreen(
                     viewModel = vm,
