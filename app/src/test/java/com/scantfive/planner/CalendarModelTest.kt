@@ -3,7 +3,10 @@ package com.scantfive.planner
 import com.scantfive.planner.data.Task
 import com.scantfive.planner.ui.calendar.CalendarEvent
 import com.scantfive.planner.ui.calendar.defaultDueMillis
+import com.scantfive.planner.ui.calendar.LaneBar
+import com.scantfive.planner.ui.calendar.LaneGap
 import com.scantfive.planner.ui.calendar.dotsFor
+import com.scantfive.planner.ui.calendar.laneSlots
 import com.scantfive.planner.ui.calendar.monthTitle
 import com.scantfive.planner.ui.calendar.monthWeeks
 import com.scantfive.planner.ui.calendar.toCalendarEvent
@@ -115,5 +118,25 @@ class CalendarModelTest {
     @Test
     fun monthTitleIsCapitalizedStandaloneName() {
         assertEquals("Октябрь 2026", monthTitle(YearMonth.of(2026, 10), Locale.forLanguageTag("ru")))
+    }
+
+    @Test
+    fun laneSlotsAlwaysSpanTheWholeWeek() {
+        val week = (5L..11L).map { LocalDate.of(2026, 10, 1).plusDays(it - 1) }
+        // Событие 6–8 октября (колонки 1–3) не должно растягиваться до воскресенья.
+        val slots = laneSlots(weekSegments(week, listOf(event(1, d(6), d(8)))))
+        assertEquals(listOf(1, 3, 3), slots.map { it.span })
+        assertTrue(slots[0] is LaneGap)
+        assertTrue(slots[1] is LaneBar)
+        assertTrue(slots[2] is LaneGap)
+    }
+
+    @Test
+    fun laneSlotsWithSeveralBarsAndNoTrailingGap() {
+        val week = (5L..11L).map { LocalDate.of(2026, 10, 1).plusDays(it - 1) }
+        val segments = weekSegments(week, listOf(event(1, d(5), d(6)), event(2, d(9), d(14))))
+        val slots = laneSlots(segments)
+        assertEquals(listOf(2, 2, 3), slots.map { it.span })
+        assertEquals(7, slots.sumOf { it.span })
     }
 }
