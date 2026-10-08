@@ -12,6 +12,13 @@
     <string name="end_add">Добавить протяжённость</string>
     <string name="end_change">Изменить дату окончания</string>
     <string name="end_clear">Убрать</string>
+    <string name="quick_add">Быстрое добавление</string>
+    <string name="quick_add_hint">Например: созвон завтра в 15, синий</string>
+    <string name="quick_add_no_title">Без названия</string>
+    <string name="quick_add_details">Подробнее</string>
+    <string name="task_added">Задача добавлена</string>
+    <string name="voice_input">Голосовой ввод</string>
+    <string name="speech_prompt">Скажите, что запланировать</string>
     <string name="title_tasks">Задачи</string>
     <string name="title_new_task">Новая задача</string>
     <string name="title_edit_task">Редактирование</string>

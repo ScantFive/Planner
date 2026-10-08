@@ -21,6 +21,8 @@ class TaskEditViewModel(
     private val taskId: Long,
     /** Для новой задачи: день (epoch day), выбранный в календаре. */
     initialDay: Long? = null,
+    /** Для новой задачи: заполненный черновик из быстрого добавления. */
+    draft: Task? = null,
 ) : ViewModel() {
     var title by mutableStateOf("")
     var notes by mutableStateOf("")
@@ -41,7 +43,13 @@ class TaskEditViewModel(
     private var original: Task? = null
 
     init {
-        if (taskId == NEW_TASK && initialDay != null) {
+        if (taskId == NEW_TASK && draft != null) {
+            title = draft.title
+            notes = draft.notes
+            dueAt = draft.dueAt
+            endDay = draft.endDay
+            color = draft.color
+        } else if (taskId == NEW_TASK && initialDay != null) {
             dueAt = defaultDueMillis(LocalDate.ofEpochDay(initialDay), LocalDateTime.now())
         }
         if (taskId != NEW_TASK) {
