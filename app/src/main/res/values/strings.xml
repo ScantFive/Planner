@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Планировщик</string>
+    <string name="title_tasks">Задачи</string>
+    <string name="title_new_task">Новая задача</string>
+    <string name="title_edit_task">Редактирование</string>
+    <string name="filter_active">Активные</string>
+    <string name="filter_done">Выполненные</string>
+    <string name="filter_all">Все</string>
+    <string name="empty_list">Задач пока нет.\nНажмите «+», чтобы добавить.</string>
+    <string name="add_task">Добавить задачу</string>
+    <string name="back">Назад</string>
+    <string name="delete">Удалить</string>
+    <string name="save">Сохранить</string>
+    <string name="field_title">Название</string>
+    <string name="field_notes">Заметка</string>
+    <string name="due_none">Срок не задан</string>
+    <string name="due_set">Срок: %1$s</string>
+    <string name="due_pick">Выбрать срок</string>
+    <string name="due_change">Изменить срок</string>
+    <string name="due_clear">Убрать срок</string>
+    <string name="ok">ОК</string>
+    <string name="cancel">Отмена</string>
+    <string name="channel_name">Напоминания о задачах</string>
+    <string name="channel_description">Уведомления о наступлении срока задачи</string>
+    <string name="notification_title">Пора выполнить задачу</string>
+</resources>
