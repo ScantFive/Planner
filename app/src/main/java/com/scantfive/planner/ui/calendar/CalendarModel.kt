@@ -107,6 +107,33 @@ fun weekSegments(week: List<LocalDate>, events: List<CalendarEvent>): List<BarSe
     }
 }
 
+/** Кусок дорожки шириной [span] колонок: пустой промежуток или полоса события. */
+sealed interface LaneSlot {
+    val span: Int
+}
+
+data class LaneGap(override val span: Int) : LaneSlot
+
+data class LaneBar(val segment: BarSegment) : LaneSlot {
+    override val span: Int get() = segment.endCol - segment.startCol + 1
+}
+
+/**
+ * Разбивает одну дорожку на промежутки и полосы, которые в сумме занимают ровно 7 колонок.
+ * Хвостовой промежуток обязателен: иначе при раскладке по весам полоса растянется до конца недели.
+ */
+fun laneSlots(segments: List<BarSegment>): List<LaneSlot> {
+    val slots = mutableListOf<LaneSlot>()
+    var column = 0
+    segments.sortedBy { it.startCol }.forEach { segment ->
+        if (segment.startCol > column) slots += LaneGap(segment.startCol - column)
+        slots += LaneBar(segment)
+        column = segment.endCol + 1
+    }
+    if (column < 7) slots += LaneGap(7 - column)
+    return slots
+}
+
 /** Однодневные события дня — они рисуются точками. */
 fun dotsFor(day: LocalDate, events: List<CalendarEvent>): List<CalendarEvent> =
     events.filter { !it.isMultiDay && it.start == day }

@@ -259,40 +259,42 @@ private fun DayNumber(
 @Composable
 private fun LaneRow(segments: List<BarSegment>, week: List<LocalDate>, onSelect: (LocalDate) -> Unit) {
     Row(Modifier.fillMaxWidth().padding(vertical = 1.dp)) {
-        var column = 0
-        segments.forEach { segment ->
-            if (segment.startCol > column) {
-                Spacer(Modifier.weight((segment.startCol - column).toFloat()))
+        laneSlots(segments).forEach { slot ->
+            when (slot) {
+                is LaneGap -> Spacer(Modifier.weight(slot.span.toFloat()))
+                is LaneBar -> LaneBarBox(slot.segment, week, onSelect, Modifier.weight(slot.span.toFloat()))
             }
-            val radius = 7.dp
-            val shape = RoundedCornerShape(
-                topStart = if (segment.roundStart) radius else 0.dp,
-                bottomStart = if (segment.roundStart) radius else 0.dp,
-                topEnd = if (segment.roundEnd) radius else 0.dp,
-                bottomEnd = if (segment.roundEnd) radius else 0.dp,
-            )
-            val color = Color(segment.event.color).copy(alpha = if (segment.event.isDone) 0.4f else 1f)
-            Box(
-                Modifier
-                    .weight((segment.endCol - segment.startCol + 1).toFloat())
-                    .padding(start = if (segment.roundStart) 2.dp else 0.dp, end = if (segment.roundEnd) 2.dp else 0.dp)
-                    .height(14.dp)
-                    .background(color, shape)
-                    .clickable { onSelect(week[segment.startCol]) },
-                contentAlignment = Alignment.CenterStart,
-            ) {
-                Text(
-                    segment.event.title,
-                    color = Color.White,
-                    fontSize = 10.sp,
-                    lineHeight = 12.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Clip,
-                    modifier = Modifier.padding(horizontal = 4.dp),
-                )
-            }
-            column = segment.endCol + 1
         }
+    }
+}
+
+@Composable
+private fun LaneBarBox(segment: BarSegment, week: List<LocalDate>, onSelect: (LocalDate) -> Unit, modifier: Modifier) {
+    val radius = 7.dp
+    val shape = RoundedCornerShape(
+        topStart = if (segment.roundStart) radius else 0.dp,
+        bottomStart = if (segment.roundStart) radius else 0.dp,
+        topEnd = if (segment.roundEnd) radius else 0.dp,
+        bottomEnd = if (segment.roundEnd) radius else 0.dp,
+    )
+    val color = Color(segment.event.color).copy(alpha = if (segment.event.isDone) 0.4f else 1f)
+    Box(
+        modifier
+            .padding(start = if (segment.roundStart) 2.dp else 0.dp, end = if (segment.roundEnd) 2.dp else 0.dp)
+            .height(14.dp)
+            .background(color, shape)
+            .clickable { onSelect(week[segment.startCol]) },
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Text(
+            segment.event.title,
+            color = Color.White,
+            fontSize = 10.sp,
+            lineHeight = 12.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Clip,
+            modifier = Modifier.padding(horizontal = 4.dp),
+        )
     }
 }
 
