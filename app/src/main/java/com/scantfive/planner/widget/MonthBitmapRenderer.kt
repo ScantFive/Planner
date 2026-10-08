@@ -10,6 +10,8 @@ import com.scantfive.planner.ui.calendar.CalendarEvent
 import com.scantfive.planner.ui.calendar.MAX_DOTS
 import com.scantfive.planner.ui.calendar.MAX_LANES
 import com.scantfive.planner.ui.calendar.dotsFor
+import com.scantfive.planner.ui.calendar.heatAlpha
+import com.scantfive.planner.ui.calendar.heatLevel
 import com.scantfive.planner.ui.calendar.monthWeeks
 import com.scantfive.planner.ui.calendar.weekSegments
 import java.time.DayOfWeek
@@ -69,6 +71,19 @@ class MonthBitmapRenderer(private val density: Float) {
 
         weeks.forEachIndexed { row, week ->
             val top = headerHeight + row * rowHeight
+            week.forEachIndexed { column, day ->
+                val level = heatLevel(day, events)
+                if (level > 0) {
+                    fill.color = withAlpha(palette.heat, heatAlpha(level))
+                    val inset = dp(1f)
+                    canvas.drawRoundRect(
+                        RectF(column * columnWidth + inset, top + inset, (column + 1) * columnWidth - inset, top + rowHeight - inset),
+                        dp(6f),
+                        dp(6f),
+                        fill,
+                    )
+                }
+            }
             week.forEachIndexed { column, day ->
                 drawDayNumber(canvas, day, month, today, columnWidth * (column + 0.5f), top + dp(10f), text, fill, palette)
             }
@@ -133,5 +148,8 @@ class MonthBitmapRenderer(private val density: Float) {
 
     /** Выполненные события приглушены, как в приложении. */
     private fun eventColor(event: CalendarEvent): Int =
-        if (event.isDone) (event.color and 0x00FFFFFF) or (0x66 shl 24) else event.color
+        if (event.isDone) withAlpha(event.color, 0.4f) else event.color
+
+    private fun withAlpha(color: Int, alpha: Float): Int =
+        (color and 0x00FFFFFF) or ((alpha * 255).toInt().coerceIn(0, 255) shl 24)
 }
