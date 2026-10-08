@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -183,26 +184,42 @@ private fun WeekRow(
 ) {
     val segments = remember(week, events) { weekSegments(week, events).filter { it.lane < MAX_LANES } }
     val laneCount = (segments.maxOfOrNull { it.lane } ?: -1) + 1
+    val heat = remember(week, events) { week.map { heatLevel(it, events) } }
+    val heatColor = MaterialTheme.colorScheme.primary
 
-    Column(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
-        Row(Modifier.fillMaxWidth()) {
-            week.forEach { day ->
-                DayNumber(
-                    day = day,
-                    inMonth = YearMonth.from(day) == month,
-                    isToday = day == today,
-                    isSelected = day == selected,
-                    onClick = { onSelect(day) },
-                    modifier = Modifier.weight(1f),
+    Box(Modifier.fillMaxWidth()) {
+        // Тепловая карта: фон дня тем насыщеннее, чем ближе дедлайны.
+        Row(Modifier.matchParentSize()) {
+            heat.forEach { level ->
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .padding(1.dp)
+                        .background(heatColor.copy(alpha = heatAlpha(level)), RoundedCornerShape(6.dp)),
                 )
             }
         }
-        repeat(laneCount) { lane ->
-            LaneRow(segments.filter { it.lane == lane }.sortedBy { it.startCol }, week, onSelect)
-        }
-        Row(Modifier.fillMaxWidth().height(10.dp)) {
-            week.forEach { day ->
-                DotsCell(dotsFor(day, events), Modifier.weight(1f).clickable { onSelect(day) })
+        Column(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
+            Row(Modifier.fillMaxWidth()) {
+                week.forEach { day ->
+                    DayNumber(
+                        day = day,
+                        inMonth = YearMonth.from(day) == month,
+                        isToday = day == today,
+                        isSelected = day == selected,
+                        onClick = { onSelect(day) },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+            repeat(laneCount) { lane ->
+                LaneRow(segments.filter { it.lane == lane }.sortedBy { it.startCol }, week, onSelect)
+            }
+            Row(Modifier.fillMaxWidth().height(10.dp)) {
+                week.forEach { day ->
+                    DotsCell(dotsFor(day, events), Modifier.weight(1f).clickable { onSelect(day) })
+                }
             }
         }
     }
