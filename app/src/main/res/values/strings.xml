@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Планировщик</string>
+    <string name="tab_calendar">Календарь</string>
+    <string name="today">Сегодня</string>
+    <string name="prev_month">Предыдущий месяц</string>
+    <string name="next_month">Следующий месяц</string>
+    <string name="no_events_day">В этот день событий нет</string>
+    <string name="field_color">Цвет</string>
+    <string name="end_none">Длится один день</string>
+    <string name="end_set">Заканчивается: %1$s</string>
+    <string name="end_add">Добавить протяжённость</string>
+    <string name="end_change">Изменить дату окончания</string>
+    <string name="end_clear">Убрать</string>
     <string name="title_tasks">Задачи</string>
     <string name="title_new_task">Новая задача</string>
     <string name="title_edit_task">Редактирование</string>
