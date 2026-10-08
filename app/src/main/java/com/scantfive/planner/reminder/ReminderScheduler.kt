@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import androidx.core.app.NotificationManagerCompat
 import com.scantfive.planner.data.Task
 
 class ReminderScheduler(private val context: Context) {
@@ -33,7 +34,9 @@ class ReminderScheduler(private val context: Context) {
         }
     }
 
+    /** Снимает будильник и убирает уже показанное уведомление. */
     fun cancel(taskId: Long) {
+        NotificationManagerCompat.from(context).cancel(taskId.toInt())
         pendingIntent(taskId, create = false)?.let {
             alarmManager.cancel(it)
             it.cancel()

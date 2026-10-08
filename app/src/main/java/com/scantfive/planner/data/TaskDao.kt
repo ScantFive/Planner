@@ -19,6 +19,13 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE isDone = 0 AND dueAt IS NOT NULL AND dueAt > :now")
     suspend fun getUpcoming(now: Long): List<Task>
 
+    /** Задачи, срок которых наступил, а уведомление так и не показано (устройство было выключено). */
+    @Query("SELECT * FROM tasks WHERE isDone = 0 AND reminderFired = 0 AND dueAt IS NOT NULL AND dueAt <= :now")
+    suspend fun getMissed(now: Long): List<Task>
+
+    @Query("UPDATE tasks SET reminderFired = 1 WHERE id = :id")
+    suspend fun markFired(id: Long)
+
     /** Возвращает id вставленной строки (для обновления результат не используется). */
     @Upsert
     suspend fun upsert(task: Task): Long

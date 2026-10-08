@@ -34,6 +34,15 @@ class TaskTest {
     }
 
     @Test
+    fun dueWhenTimeReachedAndNotDone() {
+        assertTrue(Task(title = "a", dueAt = now - 1).isDue(now))
+        assertTrue(Task(title = "a", dueAt = now + Task.DUE_SLACK_MS).isDue(now))
+        assertFalse(Task(title = "a", dueAt = now + Task.DUE_SLACK_MS + 1).isDue(now))
+        assertFalse(Task(title = "a", dueAt = now - 1, isDone = true).isDue(now))
+        assertFalse(Task(title = "a").isDue(now))
+    }
+
+    @Test
     fun filtersSplitTasksByDoneFlag() {
         val active = Task(id = 1, title = "a")
         val done = Task(id = 2, title = "b", isDone = true)

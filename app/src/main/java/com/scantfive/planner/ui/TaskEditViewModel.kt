@@ -20,16 +20,26 @@ class TaskEditViewModel(
     var loaded by mutableStateOf(taskId == NEW_TASK)
         private set
 
+    /** Редактируемой задачи больше нет (например, удалена) — экран нужно закрыть. */
+    var missing by mutableStateOf(false)
+        private set
+
+    /** Защита от повторных нажатий, пока операция сохранения/удаления выполняется. */
+    private var busy = false
+
     private var original: Task? = null
 
     init {
         if (taskId != NEW_TASK) {
             viewModelScope.launch {
-                repository.get(taskId)?.let {
-                    original = it
-                    title = it.title
-                    notes = it.notes
-                    dueAt = it.dueAt
+                val task = repository.get(taskId)
+                if (task == null) {
+                    missing = true
+                } else {
+                    original = task
+                    title = task.title
+                    notes = task.notes
+                    dueAt = task.dueAt
                 }
                 loaded = true
             }
@@ -39,7 +49,8 @@ class TaskEditViewModel(
     val canSave: Boolean get() = title.isNotBlank()
 
     fun save(onDone: () -> Unit) {
-        if (!canSave) return
+        if (!canSave || busy) return
+        busy = true
         viewModelScope.launch {
             val base = original ?: Task(title = "")
             repository.save(base.copy(title = title.trim(), notes = notes.trim(), dueAt = dueAt))
@@ -49,6 +60,8 @@ class TaskEditViewModel(
 
     fun delete(onDone: () -> Unit) {
         val task = original ?: return
+        if (busy) return
+        busy = true
         viewModelScope.launch {
             repository.delete(task)
             onDone()

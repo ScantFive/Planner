@@ -13,7 +13,9 @@ class TaskRepository(
 
     /** Сохраняет задачу и синхронизирует напоминание. Возвращает id задачи. */
     suspend fun save(task: Task): Long {
-        val inserted = dao.upsert(task)
+        val previousDue = if (task.id == 0L) null else dao.get(task.id)?.dueAt
+        val toSave = if (task.dueAt != previousDue) task.copy(reminderFired = false) else task
+        val inserted = dao.upsert(toSave)
         val id = if (task.id == 0L) inserted else task.id
         scheduler.sync(task.copy(id = id))
         return id
@@ -32,4 +34,9 @@ class TaskRepository(
     suspend fun rescheduleAll() {
         dao.getUpcoming(System.currentTimeMillis()).forEach { scheduler.sync(it) }
     }
+
+    /** Задачи, чей срок прошёл без уведомления. Вызывающий показывает их и вызывает [markFired]. */
+    suspend fun missedReminders(): List<Task> = dao.getMissed(System.currentTimeMillis())
+
+    suspend fun markFired(id: Long) = dao.markFired(id)
 }

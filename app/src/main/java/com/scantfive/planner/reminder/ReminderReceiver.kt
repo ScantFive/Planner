@@ -19,8 +19,9 @@ class ReminderReceiver : BroadcastReceiver() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val task = app.container.repository.get(taskId)
-                if (task != null && !task.isDone) {
+                if (task != null && task.isDue(System.currentTimeMillis())) {
                     NotificationHelper.show(app, task)
+                    app.container.repository.markFired(task.id)
                 }
             } finally {
                 pending.finish()

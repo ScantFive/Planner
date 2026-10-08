@@ -19,7 +19,12 @@ class BootReceiver : BroadcastReceiver() {
         val app = context.applicationContext as PlannerApp
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                app.container.repository.rescheduleAll()
+                val repository = app.container.repository
+                repository.rescheduleAll()
+                repository.missedReminders().forEach {
+                    NotificationHelper.show(app, it)
+                    repository.markFired(it.id)
+                }
             } finally {
                 pending.finish()
             }
