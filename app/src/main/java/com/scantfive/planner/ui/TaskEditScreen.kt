@@ -1,6 +1,19 @@
 package com.scantfive.planner.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import com.scantfive.planner.data.TaskColors
+import com.scantfive.planner.ui.calendar.epochDayOf
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,7 +30,6 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -56,6 +68,7 @@ fun TaskEditScreen(
     var showTimePicker by rememberSaveable { mutableStateOf(false) }
     var pickedEpochDay by rememberSaveable { mutableStateOf<Long?>(null) }
     var timeInPastError by rememberSaveable { mutableStateOf(false) }
+    var showEndPicker by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(viewModel.missing) {
         if (viewModel.missing) onClose()
@@ -115,11 +128,35 @@ fun TaskEditScreen(
                     Text(stringResource(if (due == null) R.string.due_pick else R.string.due_change))
                 }
                 if (due != null) {
-                    TextButton(onClick = { viewModel.dueAt = null }) {
+                    TextButton(onClick = { viewModel.updateDue(null) }) {
                         Text(stringResource(R.string.due_clear))
                     }
                 }
             }
+
+            if (due != null) {
+                val end = viewModel.endDay
+                Text(
+                    if (end == null) {
+                        stringResource(R.string.end_none)
+                    } else {
+                        stringResource(R.string.end_set, formatDay(end))
+                    },
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = { showEndPicker = true }) {
+                        Text(stringResource(if (end == null) R.string.end_add else R.string.end_change))
+                    }
+                    if (end != null) {
+                        TextButton(onClick = { viewModel.endDay = null }) {
+                            Text(stringResource(R.string.end_clear))
+                        }
+                    }
+                }
+            }
+
+            Text(stringResource(R.string.field_color), style = MaterialTheme.typography.labelLarge)
+            ColorPicker(selected = viewModel.color, onSelect = { viewModel.color = it })
 
             Button(
                 onClick = { viewModel.save(onClose) },
@@ -128,6 +165,40 @@ fun TaskEditScreen(
             ) {
                 Text(stringResource(R.string.save))
             }
+        }
+    }
+
+    val endPickerStartDay = viewModel.dueAt?.let { epochDayOf(it) }
+    if (showEndPicker && endPickerStartDay != null) {
+        val startDay: Long = endPickerStartDay
+        val startUtcMillis = LocalDate.ofEpochDay(startDay).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+        val initialDay = maxOf(viewModel.endDay ?: (startDay + 1), startDay + 1)
+        val state = rememberDatePickerState(
+            initialSelectedDateMillis = LocalDate.ofEpochDay(initialDay)
+                .atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
+            selectableDates = object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long) = utcTimeMillis > startUtcMillis
+            },
+        )
+        DatePickerDialog(
+            onDismissRequest = { showEndPicker = false },
+            confirmButton = {
+                TextButton(
+                    enabled = state.selectedDateMillis != null,
+                    onClick = {
+                        // DatePicker отдаёт полночь UTC выбранной даты.
+                        state.selectedDateMillis?.let {
+                            viewModel.endDay = Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate().toEpochDay()
+                        }
+                        showEndPicker = false
+                    },
+                ) { Text(stringResource(R.string.ok)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEndPicker = false }) { Text(stringResource(R.string.cancel)) }
+            },
+        ) {
+            DatePicker(state = state)
         }
     }
 
@@ -193,7 +264,7 @@ fun TaskEditScreen(
                             if (due <= System.currentTimeMillis()) {
                                 timeInPastError = true
                             } else {
-                                viewModel.dueAt = due
+                                viewModel.updateDue(due)
                                 timeInPastError = false
                                 showTimePicker = false
                             }
@@ -218,5 +289,28 @@ fun TaskEditScreen(
                 }
             },
         )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ColorPicker(selected: Int, onSelect: (Int) -> Unit) {
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        TaskColors.palette.forEach { color ->
+            Box(
+                Modifier
+                    .size(40.dp)
+                    .background(Color(color), CircleShape)
+                    .clickable { onSelect(color) },
+                contentAlignment = Alignment.Center,
+            ) {
+                if (color == selected) {
+                    Icon(Icons.Default.Check, contentDescription = null, tint = Color.White)
+                }
+            }
+        }
     }
 }

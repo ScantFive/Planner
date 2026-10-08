@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Task::class], version = 2, exportSchema = false)
+@Database(entities = [Task::class], version = 3, exportSchema = false)
 abstract class PlannerDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
 
@@ -18,9 +18,16 @@ abstract class PlannerDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE tasks ADD COLUMN color INTEGER NOT NULL DEFAULT -12627531")
+                db.execSQL("ALTER TABLE tasks ADD COLUMN endDay INTEGER")
+            }
+        }
+
         fun create(context: Context): PlannerDatabase =
             Room.databaseBuilder(context, PlannerDatabase::class.java, "planner.db")
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build()
     }
 }

@@ -15,6 +15,10 @@ data class Task(
     val createdAt: Long = System.currentTimeMillis(),
     /** Уведомление по сроку уже показано (нужно, чтобы не повторять и не терять пропущенные). */
     @ColumnInfo(defaultValue = "0") val reminderFired: Boolean = false,
+    /** Цвет события в календаре (ARGB). */
+    @ColumnInfo(defaultValue = "-12627531") val color: Int = TaskColors.DEFAULT,
+    /** Последний день протяжённого события (epoch day) или null, если событие однодневное. */
+    val endDay: Long? = null,
 ) {
     /** Нужно ли напомнить об этой задаче: не выполнена и срок ещё впереди. */
     fun needsReminder(now: Long): Boolean = !isDone && dueAt != null && dueAt > now
